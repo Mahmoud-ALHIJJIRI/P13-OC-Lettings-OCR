@@ -26,6 +26,9 @@ class Address(models.Model):
         """Return a readable address representation."""
         return f'{self.number} {self.street}'
 
+    class Meta:
+        verbose_name_plural = "Addresses"
+
 
 # 🏘️ Letting Model
 class Letting(models.Model):

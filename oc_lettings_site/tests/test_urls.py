@@ -1,4 +1,3 @@
-import pytest
 from django.urls import reverse, resolve
 from oc_lettings_site import views as site_views
 

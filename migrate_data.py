@@ -27,7 +27,7 @@ def migrate_lettings():
         address = NewAddress.objects.get(street=letting.address.street)
         NewLetting.objects.create(
             title=letting.title,
-            address=address,
+            address=address
         )
 
 
@@ -35,7 +35,7 @@ def migrate_profiles():
     for profile in Profile.objects.all():
         NewProfile.objects.create(
             user=profile.user,
-            favorite_city=profile.favorite_city,
+            favorite_city=profile.favorite_city
         )
 
 

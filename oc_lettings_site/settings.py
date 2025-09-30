@@ -1,4 +1,7 @@
 from dotenv import load_dotenv
+
+import oc_lettings_site
+
 load_dotenv()  # Loads variables from .env into the environment
 
 import os

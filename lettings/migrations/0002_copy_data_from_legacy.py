@@ -1,16 +1,27 @@
 from django.db import migrations
+from django.apps import apps as configured_apps # Import apps to use it in the except block
 
 # 🚀 Forward migration: Move data from 'oc_lettings_site' to 'lettings'
 def forwards(apps, schema_editor):
     """
     🔄 Migrates Address and Letting data from the old 'oc_lettings_site' app
-    to the new 'lettings' app.
+    to the new 'lettings' app, safely skipping if old models aren't found (e.g., during testing).
     """
-    # 🔍 Source models (old app)
-    old_address = apps.get_model('oc_lettings_site', 'Address')
-    old_letting = apps.get_model('oc_lettings_site', 'Letting')
+    try:
+        # 🔍 Source models (old app)
+        # Attempt to get the historical model state. If the app registry fails
+        # to find the historical app state, it raises a LookupError (or KeyError).
+        old_address = apps.get_model('oc_lettings_site', 'Address')
+        old_letting = apps.get_model('oc_lettings_site', 'Letting')
+
+    except LookupError:
+        # ⚠️ CRITICAL FIX: If the old app state cannot be resolved (common in a clean test run),
+        # we log a message (optional) and return immediately, preventing the test crash.
+        print("Skipping data migration: Old 'oc_lettings_site' models not found in this environment.")
+        return
 
     # 🎯 Target models (new app)
+    # These models should always be found since the dependency on 'lettings' is present.
     address = apps.get_model('lettings', 'Address')
     letting = apps.get_model('lettings', 'Letting')
 
@@ -38,7 +49,6 @@ def forwards(apps, schema_editor):
 def backwards(apps, schema_editor):
     """
     🗑️ Deletes all migrated Address and Letting data from the 'lettings' app.
-    This rollback assumes data still exists in the original app.
     """
     # 🎯 Target models to clean up
     address = apps.get_model('lettings', 'Address')

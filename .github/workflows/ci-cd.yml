@@ -1,0 +1,103 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - '*'           # Run CI on all branches (including master)
+  pull_request:
+    branches:
+      - master        # Ensure PRs targeting master are tested before merge
+
+jobs:
+  # --------------------------------------------------------------------------
+  # JOB 1: Continuous Integration - Runs on every push/PR
+  # --------------------------------------------------------------------------
+  test:
+    name: Build, Test & Coverage Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies (including dev tools)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run linter (Flake8)
+        # Fails the job if any linting errors are found
+        run: flake8 .
+
+      - name: Run tests with 80% coverage check
+        # 1. Run tests while collecting coverage data
+        # 2. Check the report and fail the step if coverage is below 80%
+        run: |
+          coverage run -m pytest
+          echo "--- Checking Test Coverage ---"
+          coverage report --fail-under=80
+
+  # --------------------------------------------------------------------------
+  # JOB 2: Containerization - Runs ONLY on 'master' if Job 1 succeeded
+  # --------------------------------------------------------------------------
+  docker:
+    name: Containerize and Push to Docker Hub
+    needs: test
+    # Condition: Runs only on the master branch AND only if the 'test' job succeeded
+    if: github.ref == 'refs/heads/master' && needs.test.result == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Best practice: Setup Docker Build for modern, robust, and multi-platform builds
+      - name: Set up Docker Build
+        uses: docker/setup-buildx-action@v3
+
+      # SECURITY IMPROVEMENT: Log in using the secure GitHub Action (masks credentials)
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image (SHA and Latest tags)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # Tags the image with the unique SHA (for rollback) and 'latest' (for deployment)
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/oc-lettings-site:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/oc-lettings-site:latest
+          # The tags list is automatically sanitized and optimized by the action
+
+  # --------------------------------------------------------------------------
+  # JOB 3: Deployment - Runs ONLY on 'master' if Job 2 succeeded
+  # --------------------------------------------------------------------------
+  deploy:
+    name: Production Deployment
+    needs: docker
+    # Condition: Runs only on the master branch AND only if the 'docker' job succeeded
+    if: github.ref == 'refs/heads/master' && needs.docker.result == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: Production # Links to the GitHub Environment for security/tracking
+      url: https://oc-lettings-prod.onrender.com
+
+    steps:
+      # This step confirms the end of the CD pipeline. The actual deployment trigger
+      # is handled externally by Render, which is monitoring the new ':latest' image
+      # pushed to Docker Hub in the previous job.
+      - name: Deployment Triggered by Docker Hub Push
+        run: |
+          echo "Deployment is now a platform-managed process via Render."
+          echo "The successful push of the new 'latest' image to Docker Hub has automatically triggered a deploy on the Render Web Service."
+          echo "Deployment finished. Check the Render dashboard for the live status."

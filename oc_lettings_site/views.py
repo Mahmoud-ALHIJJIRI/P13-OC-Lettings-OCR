@@ -1,9 +1,13 @@
 # 🌐 Imports
 from django.shortcuts import render
+import logging
 
 # Internal Imports
 from lettings.models import Letting
 from profiles.models import Profile
+
+
+logger = logging.getLogger(__name__)
 
 
 # 🏠 Homepage View
@@ -31,4 +35,12 @@ def custom_404(request, exception):
 
 def custom_500(request):
     """Custom 500 error page view."""
+    logger.error(
+        "Unhandled server error",
+        extra={
+            "path": request.path,
+            "method": request.method,
+            "user": getattr(request.user, "username", "anonymous"),
+        },
+    )
     return render(request, 'custom_500.html', status=500)

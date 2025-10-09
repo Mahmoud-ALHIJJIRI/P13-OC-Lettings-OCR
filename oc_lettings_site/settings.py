@@ -1,25 +1,34 @@
 from dotenv import load_dotenv
 
-import oc_lettings_site
-
 load_dotenv()  # Loads variables from .env into the environment
 
-import os
+import os, re, sentry_sdk
 from pathlib import Path
-import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+
 
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Sentry initialization
-sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN"),
-    integrations=[DjangoIntegration()],
-    send_default_pii=True,
-    environment=os.getenv("ENVIRONMENT", "development"),
-    traces_sample_rate=1.0,  # Adjust to 0.0 if you don't need performance monitoring
-)
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+SENTRY_ENV = os.getenv("ENVIRONMENT", "development")
+SENTRY_RELEASE = os.getenv("SENTRY_RELEASE", "local-dev")
+
+IGNORED_PATHS = re.compile(r"^/(health|ping|readyz)/?$")
+
+
+if SENTRY_DSN:  # ← only start Sentry if DSN exists
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=SENTRY_ENV,
+        release=SENTRY_RELEASE or None,
+        integrations=[DjangoIntegration(), LoggingIntegration(level=None, event_level=None)],
+        send_default_pii=True,
+        traces_sample_rate=1.0,
+        max_breadcrumbs=200,
+    )
 
 # Security settings
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -47,8 +56,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files in prod
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',

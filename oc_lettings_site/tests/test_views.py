@@ -5,7 +5,7 @@ from django.test import RequestFactory
 from django.urls import reverse
 from oc_lettings_site.views import custom_404, custom_500
 from profiles.models import Profile
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
 
 
 @pytest.mark.django_db
@@ -42,16 +42,17 @@ def test_custom_404_view(mock_render):
     assert "MOCK 404 RENDER" in response.content.decode()
 
 
-"""@patch("oc_lettings_site.views.render")
+@patch("oc_lettings_site.views.render")
 def test_custom_500_view(mock_render):
-
-    # 💥 Test custom 500 view using a mocked render.
-
+    """
+    💥 Test custom 500 view using a mocked render.
+    """
     mock_render.return_value = HttpResponse("MOCK 500 RENDER", status=500)
     factory = RequestFactory()
     request = factory.get("/server-error/")
+    request.user = AnonymousUser()
     response = custom_500(request)
 
     assert response.status_code == 500
     mock_render.assert_called_once()
-    assert "MOCK 500 RENDER" in response.content.decode()"""
+    assert "MOCK 500 RENDER" in response.content.decode()

@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: Production # Links to the GitHub Environment for security/tracking
-      url: https://oc-lettings-prod.onrender.com
+      url: https://oc-lettings-site-latest-utfw.onrender.com
 
     steps:
       # This step confirms the end of the CD pipeline. The actual deployment trigger

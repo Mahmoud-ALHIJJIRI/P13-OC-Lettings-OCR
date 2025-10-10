@@ -1,20 +1,18 @@
-# Stage 1: Build Stage
-# Use a Python base image to handle dependency installation and static file collection.
+# --------------------------------------------------------------------------
+# Stage 1: Build Stage (Handles large downloads and static files)
+# --------------------------------------------------------------------------
 FROM python:3.11-slim AS builder
 
-# Set environment variables for the container
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-ENV DJANGO_SETTINGS_MODULE=oc_lettings_site.settings
 
 # Set working directory inside the container
 WORKDIR /app
 
-# Copy the requirements file and install dependencies first (leverages Docker caching)
-# NOTE: Ensure Gunicorn is listed in requirements.txt
+# Copy and install dependencies in the builder stage
 COPY requirements.txt /app/
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --target=/install
 
 # Copy the entire Django project code
 COPY . /app/
@@ -22,23 +20,27 @@ COPY . /app/
 # In Django, static files must be collected before deployment
 RUN python manage.py collectstatic --noinput
 
-# -----------------------------------------------------------------------------
-
-# Stage 2: Final Production Image
-# Use a highly minimal base image for the final running application
+# --------------------------------------------------------------------------
+# Stage 2: Final Production Image (Minimal Runtime)
+# --------------------------------------------------------------------------
+# Use the same base image for consistency and environment compatibility
 FROM python:3.11-slim
 
-# Set working directory inside the container
+# Copy the requirements file needed for the Gunicorn installation path
+COPY requirements.txt /app/
 WORKDIR /app
 
-# Copy only the necessary files from the builder stage
-# This includes the collected static files and the installed dependencies
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+# *** CRITICAL FIX: Re-install dependencies in the final stage's environment. ***
+# This guarantees that the Gunicorn executable is placed in the final image's $PATH.
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+# Copy the application code and collected static files from the builder stage
 COPY --from=builder /app /app
 
-# Expose the application port (Render defaults to 8000 for Django)
+# Expose the application port
 EXPOSE 8000
 
-# Set the command to run the application using Gunicorn (a production WSGI server)
-# CORRECTION: Using your actual WSGI path (oc_lettings_site.wsgi)
+# Set the command to run the application using Gunicorn
+# Ensure gunicorn is in requirements.txt
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "oc_lettings_site.wsgi"]

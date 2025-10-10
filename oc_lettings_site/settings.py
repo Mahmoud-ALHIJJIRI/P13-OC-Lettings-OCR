@@ -37,7 +37,7 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 
 if ENVIRONMENT == "production":
-    ALLOWED_HOSTS = ['your-domain.com']  # Replace with your actual domain
+    ALLOWED_HOSTS = ['oc-lettings-site-latest-utfw.onrender.com']  # Replace with your actual domain
 else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 

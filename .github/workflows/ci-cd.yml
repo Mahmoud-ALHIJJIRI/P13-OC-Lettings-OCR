@@ -98,8 +98,9 @@ jobs:
       # This step confirms the end of the CD pipeline. The actual deployment trigger
       # is handled externally by Render, which is monitoring the new ':latest' image
       # pushed to Docker Hub in the previous job.
-      - name: Deployment Triggered by Docker Hub Push
+      - name: Deployment Triggered on Render
         run: |
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           echo "Deployment is now a platform-managed process via Render."
           echo "The successful push of the new 'latest' image to Docker Hub has automatically triggered a deploy on the Render Web Service."
           echo "Deployment finished. Check the Render dashboard for the live status."

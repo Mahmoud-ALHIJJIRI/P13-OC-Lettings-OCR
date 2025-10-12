@@ -33,7 +33,7 @@ def forwards(apps, schema_editor):
             street=old.street,
             city=old.city,
             state=old.state,
-            zip_code=getattr(old, 'zip_code', ''),
+            zip_code=getattr(old, 'zip_code', 00000),
             country_iso_code=getattr(old, 'country_iso_code', ''),
         )
 

@@ -39,10 +39,9 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 if ENVIRONMENT == "production":
     ALLOWED_HOSTS = [
         'oc-lettings-site-latest-utfw.onrender.com',
-        'aladnan-tech.com',  # The Root Domain
+        'aladnan-tech.com',
         'www.aladnan-tech.com',
-        '0.0.0.0',
-    ]  # Replace with your actual domain
+    ]
 else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 

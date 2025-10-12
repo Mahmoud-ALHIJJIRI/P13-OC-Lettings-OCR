@@ -41,6 +41,7 @@ if ENVIRONMENT == "production":
         'oc-lettings-site-latest-utfw.onrender.com',
         'aladnan-tech.com',  # The Root Domain
         'www.aladnan-tech.com',
+        '0.0.0.0',
     ]  # Replace with your actual domain
 else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']

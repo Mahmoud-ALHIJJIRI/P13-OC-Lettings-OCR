@@ -43,7 +43,7 @@ if ENVIRONMENT == "production":
         'www.aladnan-tech.com',
     ]
 else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+    ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [

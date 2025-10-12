@@ -1,25 +1,40 @@
+# CI/CD pipeline (GitHub Actions)
+# - Job "test": Run lint, tests and coverage on every push & PR
+# - Job "docker": Build multi-arch images (linux/amd64, linux/arm64) and push to Docker Hub
+#   only on master and only if tests pass
+# - Job "deploy": Trigger Render deployment via a secure webhook after the image is pushed
+
+# - This workflow builds multi-arch images using buildx and pushes a manifest so
+#   clients on Intel and Apple Silicon automatically pull the correct image.
+
 name: CI/CD Pipeline
 
+# Trigger on pushes on any branch and on pull requests targeting master
 on:
   push:
     branches:
-      - '*'           # Run CI on all branches (including master)
+      - '*'             # run CI on all branches
   pull_request:
     branches:
-      - master        # Ensure PRs targeting master are tested before merge
+      - master          # test PRs targeting master
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # --------------------------------------------------------------------------
   # JOB 1: Continuous Integration - Runs on every push/PR
+  # - Installs dependencies, lints the code, runs tests with coverage check.
+  # - Fails fast if lint or test coverage < 80%.
   # --------------------------------------------------------------------------
   test:
     name: Build, Test & Coverage Check
     runs-on: ubuntu-latest
     env:
-      SECRET_KEY: "ci-secret-key"     # required for signing
-
+      SECRET_KEY: "ci-secret-key"     # used by Django / tests if needed
     steps:
-      - name: Checkout repository code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python 3.11
@@ -34,73 +49,80 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run linter (Flake8)
-        # Fails the job if any linting errors are found
+        # Fails the job if linting errors are found
         run: flake8 .
 
-      - name: Run tests with 80% coverage check
-        # 1. Run tests while collecting coverage data
-        # 2. Check the report and fail the step if coverage is below 80%
+      - name: Run tests with coverage and enforce 80% threshold
         run: |
           coverage run -m pytest
           echo "--- Checking Test Coverage ---"
           coverage report --fail-under=80
 
   # --------------------------------------------------------------------------
-  # JOB 2: Containerization - Runs ONLY on 'master' if Job 1 succeeded
+  # JOB 2: Containerization - Builds and pushes multi-arch Docker images
+  # - Runs only on master branch and requires successful 'test' job.
+  # - Uses buildx to build for linux/amd64 and linux/arm64, then pushes manifest.
   # --------------------------------------------------------------------------
   docker:
     name: Containerize and Push to Docker Hub
     needs: test
-    # Condition: Runs only on the master branch AND only if the 'test' job succeeded
     if: github.ref == 'refs/heads/master' && needs.test.result == 'success'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Best practice: Setup Docker Build for modern, robust, and multi-platform builds
-      - name: Set up Docker Build
+      # Setup QEMU emulation for cross-platform builds
+      - name: Set up QEMU (for cross-platform build support)
+        uses: docker/setup-qemu-action@v2
+
+      # Setup Docker Buildx builder (multi-arch)
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # SECURITY IMPROVEMENT: Log in using the secure GitHub Action (masks credentials)
+      # Log in to Docker Hub using secrets (use token for better security)
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image (SHA and Latest tags)
+      - name: Build and push Docker image (multi-arch)
+        # Uses the official docker/build-push-action which wraps buildx and manifest push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          # Tags the image with the unique SHA (for rollback) and 'latest' (for deployment)
+          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/oc-lettings-site:${{ github.sha }}
             ${{ secrets.DOCKER_USERNAME }}/oc-lettings-site:latest
-          # The tags list is automatically sanitized and optimized by the action
+          # Optionally enable build cache here (uncomment and configure if you want)
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
 
   # --------------------------------------------------------------------------
-  # JOB 3: Deployment - Runs ONLY on 'master' if Job 2 succeeded
+  # JOB 3: Deployment - Calls Render deploy webhook to trigger a platform deploy
+  # - Runs only on master and after successful 'docker' job.
+  # - The actual hosting (Render) picks up the new image:latest and deploys.
   # --------------------------------------------------------------------------
   deploy:
-    name: Production Deployment
+    name: Production Deployment (trigger)
     needs: docker
-    # Condition: Runs only on the master branch AND only if the 'docker' job succeeded
     if: github.ref == 'refs/heads/master' && needs.docker.result == 'success'
     runs-on: ubuntu-latest
     environment:
-      name: Production # Links to the GitHub Environment for security/tracking
+      name: production
       url: https://oc-lettings-site-latest-utfw.onrender.com
-
     steps:
-      # This step confirms the end of the CD pipeline. The actual deployment trigger
-      # is handled externally by Render, which is monitoring the new ':latest' image
-      # pushed to Docker Hub in the previous job.
-      - name: Deployment Triggered on Render
+      - name: Trigger Render deployment (POST to secure hook)
+        env:
+          RENDER_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-          echo "Deployment is now a platform-managed process via Render."
-          echo "The successful push of the new 'latest' image to Docker Hub has automatically triggered a deploy on the Render Web Service."
-          echo "Deployment finished. Check the Render dashboard for the live status."
+          if [ -z "$RENDER_HOOK" ]; then
+            echo "Missing RENDER_DEPLOY_HOOK_URL secret; aborting."
+            exit 1
+          fi
+          # Fire the Render deploy webhook (Render will handle the actual deployment)
+          curl -sS -X POST "$RENDER_HOOK"
+          echo "Triggered Render deploy via webhook."

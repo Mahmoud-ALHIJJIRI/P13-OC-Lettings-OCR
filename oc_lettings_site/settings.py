@@ -6,6 +6,8 @@ import os, re, sentry_sdk
 from pathlib import Path
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+from django.core.exceptions import ImproperlyConfigured
+from django.core.management.utils import get_random_secret_key
 
 
 # Base directory
@@ -31,19 +33,29 @@ if SENTRY_DSN:  # ← only start Sentry if DSN exists
     )
 
 # Security settings
-SECRET_KEY = os.getenv("SECRET_KEY")
-DEBUG = os.getenv("DEBUG", "False") == "True"
-
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 
 if ENVIRONMENT == "production":
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+    if not SECRET_KEY:
+        raise ImproperlyConfigured("Missing SECRET_KEY in production")
+
     ALLOWED_HOSTS = [
         'oc-lettings-site-latest-utfw.onrender.com',
         'aladnan-tech.com',
         'www.aladnan-tech.com',
     ]
 else:
-    ALLOWED_HOSTS = ['*']
+    # dev: use provided or generate a temporary one
+    SECRET_KEY = os.environ.get("SECRET_KEY") or get_random_secret_key()
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0']
+
+
+# Settings module pick-up if needed:
+DJANGO_SETTINGS_MODULE = os.environ.get("DJANGO_SETTINGS_MODULE", "oc_lettings_site.settings")
+
+DEBUG = os.getenv("DEBUG", "False") == "True"
+
 
 # Application definition
 INSTALLED_APPS = [

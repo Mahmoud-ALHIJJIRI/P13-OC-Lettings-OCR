@@ -5,11 +5,12 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+
 import os
 import sys
-sys.path.insert(0, os.path.abspath(''))
+sys.path.insert(0, os.path.abspath('../..'))
 
-project = 'oc-lettings-site'
+project = 'OC-Lettings-Site'
 copyright = '2025, Mahmoud ALHIJJIRI'
 author = 'Mahmoud ALHIJJIRI'
 release = 'Version 1.0.0'
@@ -18,15 +19,17 @@ release = 'Version 1.0.0'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'sphinx.ext.autodoc', # To pull documentation from code docstrings
+    'sphinx.ext.autodoc',   # Automatically document from docstrings
+    'sphinx.ext.napoleon',   # Support for Google/NumPy-style docstrings
+    'sphinx.ext.viewcode'
     'sphinx_rtd_theme',
-    'myst_parser', # If you prefer writing documentation in Markdown (.md)
+    'myst_parser',
 ]
 
 templates_path = ['_templates']
 exclude_patterns = []
 
-language = 'en'
+
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

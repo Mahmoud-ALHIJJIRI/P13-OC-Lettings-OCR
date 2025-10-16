@@ -17,7 +17,7 @@ Prérequis
 
    .. code-block:: bash
 
-      git clone https://github.com/SalehTrissi/Python-OC-Lettings-FR.git
+      git clone https://github.com/Mahmoud-ALHIJJIRI/P13-OC-Lettings-OCR.git
       cd Python-OC-Lettings-FR
 
 2. **Créez et activez l'environnement virtuel**

@@ -1,62 +1,19 @@
-lettings package
-================
+############
+Architecture
+############
 
-Subpackages
------------
+Ce projet a été refactorisé d'une architecture monolithique vers une structure modulaire pour améliorer la maintenabilité et la séparation des responsabilités.
 
-.. toctree::
-   :maxdepth: 4
+Structure des Applications
+==========================
 
-   lettings.migrations
-   lettings.tests
+L'application est divisée en trois modules Django principaux :
 
-Submodules
-----------
+* **oc_lettings_site**
+  C'est le module principal du projet. Il gère la configuration globale (``settings.py``), le routage des URL de haut niveau (``urls.py``) et sert de point d'entrée pour le serveur WSGI.
 
-lettings.admin module
----------------------
+* **lettings**
+  Cette application est dédiée à la gestion des locations. Elle contient les modèles pour les adresses (``Address``) et les biens à louer (``Letting``), ainsi que les vues et les URL correspondantes.
 
-.. automodule:: lettings.admin
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-lettings.apps module
---------------------
-
-.. automodule:: lettings.apps
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-lettings.models module
-----------------------
-
-.. automodule:: lettings.models
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-lettings.urls module
---------------------
-
-.. automodule:: lettings.urls
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-lettings.views module
----------------------
-
-.. automodule:: lettings.views
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: lettings
-   :members:
-   :show-inheritance:
-   :undoc-members:
+* **profiles**
+  Cette application gère les profils des utilisateurs. Elle contient le modèle ``Profile``, qui est lié au modèle ``User`` de Django, ainsi que les vues et les URL associées.

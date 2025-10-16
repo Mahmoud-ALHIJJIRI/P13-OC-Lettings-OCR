@@ -1,45 +1,79 @@
-lettings.tests package
-======================
+###################
+Installation Locale
+###################
 
-Submodules
-----------
+Ce guide vous explique comment installer et lancer le projet sur votre machine locale pour le développement.
 
-lettings.tests.conftest module
-------------------------------
+Prérequis
+=========
+* Python 3.11 ou supérieur
+* Git
 
-.. automodule:: lettings.tests.conftest
-   :members:
-   :show-inheritance:
-   :undoc-members:
+Étapes d'installation
+=====================
 
-lettings.tests.test\_models module
-----------------------------------
+1. **Clonez le dépôt**
+   Ouvrez un terminal et clonez le dépôt depuis GitHub :
 
-.. automodule:: lettings.tests.test_models
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   .. code-block:: bash
 
-lettings.tests.test\_urls module
---------------------------------
+      git clone https://github.com/SalehTrissi/Python-OC-Lettings-FR.git
+      cd Python-OC-Lettings-FR
 
-.. automodule:: lettings.tests.test_urls
-   :members:
-   :show-inheritance:
-   :undoc-members:
+2. **Créez et activez l'environnement virtuel**
+   Il est fortement recommandé d'utiliser un environnement virtuel.
 
-lettings.tests.test\_views module
----------------------------------
+   .. code-block:: bash
 
-.. automodule:: lettings.tests.test_views
-   :members:
-   :show-inheritance:
-   :undoc-members:
+      python -m venv venv
 
-Module contents
----------------
+   * **Sur macOS/Linux :** ``source venv/bin/activate``
+   * **Sur Windows (PowerShell) :** ``.\venv\Scripts\Activate.ps1``
 
-.. automodule:: lettings.tests
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   .. note::
+      Si vous rencontrez une erreur de sécurité sur Windows, ouvrez PowerShell en tant qu'administrateur et exécutez la commande ``Set-ExecutionPolicy RemoteSigned``.
+
+3. **Installez les dépendances**
+
+   .. code-block:: bash
+
+      pip install -r requirements.txt
+
+4. **Appliquez les migrations**
+
+   .. code-block:: bash
+
+      python manage.py migrate
+
+Lancer le Serveur
+=================
+
+* **Mode Développement (Recommandé)**
+  Ouvrez le fichier ``oc_lettings_site/settings.py``, assurez-vous que ``DEBUG = True``, puis lancez :
+
+  .. code-block:: bash
+
+     python manage.py runserver
+
+* **Mode Production Locale**
+  Ce mode est utile pour tester les pages d'erreur personnalisées. Dans ``settings.py``, passez ``DEBUG`` à ``False``, puis exécutez :
+
+  .. code-block:: bash
+
+     python manage.py collectstatic --noinput
+     python manage.py runserver
+
+Le site est maintenant accessible à l'adresse http://127.0.0.1:8000.
+
+Accès à l'Interface d'Administration
+====================================
+L'interface d'administration est disponible à l'adresse http://127.0.0.1:8000/admin.
+
+* **Utilisateur par défaut :** ``admin``
+* **Mot de passe :** ``Abc1234!``
+
+Pour créer votre propre administrateur, utilisez la commande :
+
+   .. code-block:: bash
+
+      python manage.py createsuperuser

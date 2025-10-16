@@ -22,8 +22,6 @@ extensions = [
     'sphinx.ext.autodoc',   # Automatically document from docstrings
     'sphinx.ext.napoleon',   # Support for Google/NumPy-style docstrings
     'sphinx.ext.viewcode'
-    'sphinx_rtd_theme',
-    'myst_parser',
 ]
 
 templates_path = ['_templates']

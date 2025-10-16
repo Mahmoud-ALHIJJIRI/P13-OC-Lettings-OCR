@@ -2,6 +2,13 @@
 Orange County Lettings Documentation Technique
 =================================================
 
+.. image:: https://github.com/Mahmoud-ALHIJJIRI/P13-OC-Lettings-OCR/actions/workflows/main.yml/badge.svg
+   :target: https://github.com/SalehTrissi/Python-OC-Lettings-FR/actions
+
+.. image:: https://readthedocs.org/projects/P13-OC-Lettings-OCR/badge/?version=latest
+   :target: https://p13-oc-lettings-ocr.readthedocs.io/en/latest/
+
+
 .. role:: raw-html(raw)
    :format: html
 

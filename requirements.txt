@@ -9,6 +9,7 @@ docutils==0.21.2
 dotenv==0.9.9
 entrypoints==0.3
 flake8==7.3.0
+gunicorn==22.0.0
 idna==3.11
 imagesize==1.4.1
 iniconfig==2.1.0

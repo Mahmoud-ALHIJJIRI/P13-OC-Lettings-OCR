@@ -28,3 +28,5 @@ urlpatterns = [
 # ❗ Error Handlers (must be set at module level — NOT inside urlpatterns)
 handler404 = "oc_lettings_site.views.custom_404"
 handler500 = "oc_lettings_site.views.custom_500"
+
+
